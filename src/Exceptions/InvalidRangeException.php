@@ -15,46 +15,46 @@ use Throwable;
 class InvalidRangeException extends OutOfRangeException
 {
     /**
-     * @var int $privateRangeStart
+     * @var int $rangeStart
      */
-    private $privateRangeStart;
+    private $rangeStart;
 
     /**
-     * @var int $privateRangeEnd
+     * @var int $rangeEnd
      */
-    private $privateRangeEnd;
+    private $rangeEnd;
 
     /**
      * @param string $message
-     * @param int $privateRangeStart
-     * @param int $privateRangeEnd
+     * @param int $rangeStart
+     * @param int $rangeEnd
      * @param Throwable|null $previous
      */
     public function __construct(
         $message = "Invalid Ranges",
-        int $privateRangeStart,
-        int $privateRangeEnd,
+        int $rangeStart,
+        int $rangeEnd,
         Throwable $previous = null
     ) {
         parent::__construct($message, 400, $previous);
 
-        $this->privateRangeStart = $privateRangeStart;
-        $this->privateRangeEnd = $privateRangeEnd;
+        $this->rangeStart = $rangeStart;
+        $this->rangeEnd = $rangeEnd;
     }
 
     /**
      * @return int
      */
-    public function getPrivateRangeStart(): int
+    public function getRangeStart(): int
     {
-        return $this->privateRangeStart;
+        return $this->rangeStart;
     }
 
     /**
      * @return int
      */
-    public function getPrivateRangeEnd(): int
+    public function getRangeEnd(): int
     {
-        return $this->privateRangeEnd;
+        return $this->rangeEnd;
     }
 }
