@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use Mockery;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use OutOfRangeException;
 use PHP\ResumableDownload\Client;
 use PHP\ResumableDownload\Exceptions\InvalidRangeException;
 use PHPUnit\Framework\TestCase;
@@ -213,6 +214,69 @@ class ClientTest extends TestCase
         $client->prev();
     }
 
+    /**
+     * @covers \PHP\ResumableDownload\Client::resume
+     */
+    public function testMustResumePartialRequest()
+    {
+        /**
+         * Arrange
+         */
+        $httpClient = Mockery::mock(\GuzzleHttp\Client::class)->makePartial();
+
+        $httpClient
+            ->shouldReceive('get')
+            ->with('', ['headers' => ['Range' => "bytes=1024-2047"]])
+            ->andReturn(new Response(200, [], "Resumed Partial Request"));
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action
+         */
+        $client->resume(1024, 2047);
+        $response = $client->current();
+
+        /**
+         * Assert
+         */
+        $this->assertEquals("Resumed Partial Request", $response->getBody());
+    }
+
+    /**
+     * @covers       \PHP\ResumableDownload\Client::resume
+     *
+     * @dataProvider provideInvalidRangesToResumePartialRequest
+     *
+     * @param int $rangeStart
+     * @param int $rangeEnd
+     * @param string $exceptionClass
+     * @param string $exceptionMessage
+     */
+    public function testMustNotResumePartialRequestWithInvalidRanges(
+        int $rangeStart,
+        int $rangeEnd,
+        string $exceptionClass,
+        string $exceptionMessage
+    ) {
+        $this->expectException($exceptionClass);
+        $this->expectExceptionMessage($exceptionMessage);
+
+        /**
+         * Arrange
+         */
+        $httpClient = Mockery::mock(\GuzzleHttp\Client::class)->makePartial();
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action
+         */
+        $client->resume($rangeStart, $rangeEnd);
+    }
+
     public function provideValidResponses(): array
     {
         $response = new Response();
@@ -247,6 +311,30 @@ class ClientTest extends TestCase
                 'exception' => InvalidRangeException::class,
                 'exception_message' => "Range start, must be less or equal to Range end"
             ]
+        ];
+    }
+
+    public function provideInvalidRangesToResumePartialRequest(): array
+    {
+        return [
+            [
+                'range_start' => rand(PHP_INT_MIN, -1),
+                'range_end' => Client::CHUNK_SIZE,
+                'exception' => OutOfRangeException::class,
+                'exception_message' => "Range start and end, must be greater or equal to 0 (zero)"
+            ],
+            [
+                'range_start' => Client::CHUNK_SIZE,
+                'range_end' => rand(PHP_INT_MIN, -1),
+                'exception' => OutOfRangeException::class,
+                'exception_message' => "Range start and end, must be greater or equal to 0 (zero)"
+            ],
+            [
+                'range_start' => Client::CHUNK_SIZE + 1,
+                'range_end' => Client::CHUNK_SIZE,
+                'exception' => OutOfRangeException::class,
+                'exception_message' => "Range start, must be less or equal to Range end"
+            ],
         ];
     }
 
