@@ -135,7 +135,7 @@ class Client
      *
      * @return void
      *
-     * @throws OutOfRangeException
+     * @throws InvalidRangeException
      */
     public function resume(int $rangeStart, int $rangeEnd): void
     {
@@ -144,11 +144,13 @@ class Client
         try {
             if ($rangeStart < 0
                 || $rangeEnd < 0) {
-                throw new OutOfRangeException("Range start and end, must be greater or equal to 0 (zero)");
+                throw new InvalidRangeException(
+                    "Range start and end, must be greater or equal to 0 (zero)", $rangeStart, $rangeEnd);
             }
 
             if ($rangeStart > $rangeEnd) {
-                throw new OutOfRangeException("Range start, must be less or equal to Range end");
+                throw new InvalidRangeException(
+                    "Range start, must be less or equal to Range end", $rangeStart, $rangeEnd);
             }
 
             $this->rangeStart = $rangeStart;

@@ -8,7 +8,6 @@ use GuzzleHttp\Psr7\Response;
 use Mockery;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use OutOfRangeException;
 use PHP\ResumableDownload\Client;
 use PHP\ResumableDownload\Exceptions\InvalidRangeException;
 use PHPUnit\Framework\TestCase;
@@ -320,19 +319,19 @@ class ClientTest extends TestCase
             [
                 'range_start' => rand(PHP_INT_MIN, -1),
                 'range_end' => Client::CHUNK_SIZE,
-                'exception' => OutOfRangeException::class,
+                'exception' => InvalidRangeException::class,
                 'exception_message' => "Range start and end, must be greater or equal to 0 (zero)"
             ],
             [
                 'range_start' => Client::CHUNK_SIZE,
                 'range_end' => rand(PHP_INT_MIN, -1),
-                'exception' => OutOfRangeException::class,
+                'exception' => InvalidRangeException::class,
                 'exception_message' => "Range start and end, must be greater or equal to 0 (zero)"
             ],
             [
                 'range_start' => Client::CHUNK_SIZE + 1,
                 'range_end' => Client::CHUNK_SIZE,
-                'exception' => OutOfRangeException::class,
+                'exception' => InvalidRangeException::class,
                 'exception_message' => "Range start, must be less or equal to Range end"
             ],
         ];
