@@ -9,6 +9,7 @@ use Mockery;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use PHP\ResumableDownload\Client;
+use PHP\ResumableDownload\Exceptions\InvalidRangeException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -142,6 +143,76 @@ class ClientTest extends TestCase
         $this->assertInstanceOf(Response::class, $currentResponse);
     }
 
+    /**
+     * @covers \PHP\ResumableDownload\Client::prev
+     */
+    public function testMustExecuteAgainThePreviousPartialRequest()
+    {
+        /**
+         * Arrange
+         */
+        $httpClient = Mockery::mock(\GuzzleHttp\Client::class)->makePartial();
+
+        $httpClient
+            ->shouldReceive('get')
+            ->with('', ['headers' => ['Range' => "bytes=0-1023"]])
+            ->andReturn(new Response(200, [], "First Response"));
+        $httpClient
+            ->shouldReceive('get')
+            ->with('', ['headers' => ['Range' => "bytes=1024-2047"]])
+            ->andReturn(new Response(200, [], "Second Response"));
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action
+         */
+        $client->start();
+        $firstResponse = $client->current();
+
+        $client->next();
+
+        $client->prev();
+        $lastResponse = $client->current();
+
+        /**
+         * Assert
+         */
+        $this->assertEquals($firstResponse->getBody(), $lastResponse->getBody());
+    }
+
+    /**
+     * @covers       \PHP\ResumableDownload\Client::prev
+     *
+     * @dataProvider provideInvalidRanges
+     *
+     * @param int $chunkSize
+     * @param string $exceptionClass
+     * @param string $exceptionMessage
+     */
+    public function testMustNotExecuteThePreviousPartialRequestWithInvalidRanges(
+        int $chunkSize,
+        string $exceptionClass,
+        string $exceptionMessage
+    ) {
+        $this->expectException($exceptionClass);
+        $this->expectExceptionMessage($exceptionMessage);
+
+        /**
+         * Arrange
+         */
+        $httpClient = Mockery::mock(\GuzzleHttp\Client::class)->makePartial();
+
+        $client = new Client($httpClient, $chunkSize);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action
+         */
+        $client->prev();
+    }
+
     public function provideValidResponses(): array
     {
         $response = new Response();
@@ -160,6 +231,22 @@ class ClientTest extends TestCase
             [$response->withAddedHeader('Accept-Ranges', '')],
             [$response->withAddedHeader('Accept-Ranges', 'none')],
             [$response->withAddedHeader('Accept-Ranges', 'None')],
+        ];
+    }
+
+    public function provideInvalidRanges(): array
+    {
+        return [
+            [
+                'chunk_size' => 1,
+                'exception' => InvalidRangeException::class,
+                'exception_message' => "Range start and end, must be greater or equal to 0 (zero)"
+            ],
+            [
+                'chunk_size' => 0,
+                'exception' => InvalidRangeException::class,
+                'exception_message' => "Range start, must be less or equal to Range end"
+            ]
         ];
     }
 

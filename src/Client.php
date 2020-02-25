@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PHP\ResumableDownload;
 
 use OutOfRangeException;
+use PHP\ResumableDownload\Exceptions\InvalidRangeException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareTrait;
 
@@ -200,13 +201,15 @@ class Client
         $this->rangeStart = $this->rangeStart - $this->chunkSize;
 
         try {
-            if ($this->rangeStart < 0
-                || $this->rangeEnd < 0) {
-                throw new OutOfRangeException("Range start and end, must be greater or equal to 0 (zero)");
+            if ($this->rangeStart > $this->rangeEnd) {
+                throw new InvalidRangeException(
+                    "Range start, must be less or equal to Range end", $this->rangeStart, $this->rangeEnd);
             }
 
-            if ($this->rangeStart > $this->rangeEnd) {
-                throw new OutOfRangeException("Range start, must be less or equal to Range end");
+            if ($this->rangeStart < 0
+                || $this->rangeEnd < 0) {
+                throw new InvalidRangeException(
+                    "Range start and end, must be greater or equal to 0 (zero)", $this->rangeStart, $this->rangeEnd);
             }
 
             $this->makePartialRequest();
