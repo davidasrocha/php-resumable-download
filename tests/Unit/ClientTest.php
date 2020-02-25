@@ -74,6 +74,37 @@ class ClientTest extends TestCase
         $this->assertFalse($supports);
     }
 
+    /**
+     * @covers \PHP\ResumableDownload\Client::start
+     */
+    public function testMustStartTheFirstPartialRequest()
+    {
+        /**
+         * Arrange
+         */
+        $response = new Response(200, []);
+
+        $headers = ['headers' => ['Range' => "bytes=0-1023"]];
+
+        $httpClient = Mockery::mock(\GuzzleHttp\Client::class)->makePartial();
+        $httpClient->shouldReceive('get')->with('', $headers)->andReturn($response);
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action
+         */
+        $client->start();
+        $currentResponse = $client->current();
+
+        /**
+         * Assert
+         */
+        $this->assertInstanceOf(Response::class, $currentResponse);
+        $this->assertEquals($currentResponse, $response);
+    }
+
     public function provideValidResponses(): array
     {
         $response = new Response();

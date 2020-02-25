@@ -244,7 +244,7 @@ class Client
             ]
         ]);
 
-        $this->response = $response->getBody();
+        $this->response = $response;
     }
 
     /**
