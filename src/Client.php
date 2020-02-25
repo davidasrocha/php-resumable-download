@@ -190,7 +190,7 @@ class Client
     /**
      * @return void
      *
-     * @throws OutOfRangeException
+     * @throws InvalidRangeException
      */
     public function prev(): void
     {
