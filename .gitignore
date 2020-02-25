@@ -91,3 +91,4 @@ Temporary Items
 
 logs/*
 !logs/.gitkeep
+*.cache

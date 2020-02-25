@@ -1,0 +1,15 @@
+language: php
+php:
+  - 7.2
+  - 7.3
+
+script: phpunit
+
+before_script:
+  - composer self-update
+  - composer install --prefer-dist
+  - composer dump-autoload -o
+
+branches:
+  only:
+    - master
