@@ -57,6 +57,8 @@ class Client
     private $lastPartial;
 
     /**
+     * @codeCoverageIgnore
+     *
      * @param \GuzzleHttp\Client $client
      * @param int $chunkSize
      */
@@ -109,8 +111,8 @@ class Client
         if (array_key_exists('Content-Length', $response->getHeaders())) {
             $this->logger->debug("Header 'Content-Length' there is in response");
 
-            $contentLength = $response->getHeaderLine('Content-Length');
-            if ($contentLength >= 0) {
+            $contentLength = (int)$response->getHeaderLine('Content-Length');
+            if ($contentLength) {
                 $this->contentLength = $contentLength;
                 $this->logger->debug("Header 'Content-Length' return '{$this->contentLength} value");
             }

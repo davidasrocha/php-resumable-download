@@ -312,6 +312,8 @@ class ClientTest extends TestCase
 
         return [
             [$response->withAddedHeader('Accept-Ranges', 'bytes')],
+            [$response->withAddedHeader('Accept-Ranges', 'bytes')->withAddedHeader('Content-Length', 0)],
+            [$response->withAddedHeader('Accept-Ranges', 'bytes')->withAddedHeader('Content-Length', Client::CHUNK_SIZE)],
         ];
     }
 
