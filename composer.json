@@ -1,5 +1,15 @@
 {
     "name": "davidasrocha/php-resumable-download",
+    "type": "library",
+    "description": "PHP Resumable Download library that add supports to consume servers with HTTP Partial Request",
+    "keywords": [
+        "php",
+        "http",
+        "partial request",
+        "resume download",
+        "download"
+    ],
+    "license": "MIT",
     "authors": [
         {
             "name": "David Anderson",
@@ -8,7 +18,7 @@
     ],
     "require": {
         "php": "^7.2",
-        "guzzlehttp/guzzle": "~6.4.1",
+        "guzzlehttp/guzzle": "^6.4",
         "monolog/monolog": "^2.0"
     },
     "autoload": {
