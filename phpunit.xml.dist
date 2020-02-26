@@ -25,4 +25,8 @@
             <directory>src</directory>
         </whitelist>
     </filter>
+
+    <logging>
+        <log type="coverage-html" target="./tests/_reports"></log>
+    </logging>
 </phpunit>
