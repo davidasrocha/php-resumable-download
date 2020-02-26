@@ -276,6 +276,36 @@ class ClientTest extends TestCase
         $client->resume($rangeStart, $rangeEnd);
     }
 
+    /**
+     * @covers \PHP\ResumableDownload\Client::current
+     */
+    public function testMustReturnAnResponseOfThePartialRequest()
+    {
+        /**
+         * Arrange
+         */
+        $httpClient = Mockery::mock(\GuzzleHttp\Client::class)->makePartial();
+
+        $httpClient
+            ->shouldReceive('get')
+            ->with('', ['headers' => ['Range' => "bytes=0-1023"]])
+            ->andReturn(new Response(200, [], "First Response"));
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action
+         */
+        $client->start();
+
+        /**
+         * Assert
+         */
+        $this->assertInstanceOf(Response::class, $client->current());
+        $this->assertNull($client->current());
+    }
+
     public function provideValidResponses(): array
     {
         $response = new Response();
