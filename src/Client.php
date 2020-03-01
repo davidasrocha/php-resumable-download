@@ -186,6 +186,10 @@ class Client
         $this->rangeStart = $this->rangeEnd + 1;
         $this->rangeEnd = $this->rangeEnd + $this->chunkSize;
 
+        if ($this->contentLength > 0) {
+            $this->rangeEnd = $this->contentLength;
+        }
+
         $this->makePartialRequest();
     }
 

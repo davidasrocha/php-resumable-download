@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\PHP\ResumableDownload;
 
 use GuzzleHttp\Psr7\Response;
+use http\Message\Body;
 use Mockery;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -304,6 +305,54 @@ class ClientTest extends TestCase
          */
         $this->assertInstanceOf(Response::class, $client->current());
         $this->assertNull($client->current());
+    }
+
+    /**
+     * @covers \PHP\ResumableDownload\Client::serverSupportsPartialRequests
+     * @covers \PHP\ResumableDownload\Client::start
+     * @covers \PHP\ResumableDownload\Client::next
+     * @covers \PHP\ResumableDownload\Client::isLastPartialRequest
+     */
+    public function testShouldNotAllowRangeEndGreaterThanContentLength()
+    {
+        /**
+         * Arrange
+         */
+        $response = new Response();
+
+        $responseServerSupportsPartialRequests = $response->withAddedHeader('Accept-Ranges', 'bytes')->withAddedHeader('Content-Length', 2000);
+
+        $httpClient = Mockery::spy(\GuzzleHttp\Client::class);
+
+        $httpClient
+            ->shouldReceive('head')
+            ->with('/')
+            ->andReturn($responseServerSupportsPartialRequests);
+
+        $httpClient
+            ->shouldReceive('get')
+            ->once()
+            ->with('', ['headers' => ['Range' => "bytes=0-1023"]])
+            ->andReturn($response);
+
+        $httpClient
+            ->shouldReceive('get')
+            ->once()
+            ->with('', ['headers' => ['Range' => "bytes=1024-2000"]])
+            ->andReturn(new Response(200, [], "Last partial request"));
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action and Assert
+         */
+        $client->serverSupportsPartialRequests();
+
+        $client->start();
+        $client->next();
+
+        $this->assertEquals("Last partial request", $client->current()->getBody()->getContents());
     }
 
     public function provideValidResponses(): array
