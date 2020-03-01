@@ -311,7 +311,6 @@ class ClientTest extends TestCase
      * @covers \PHP\ResumableDownload\Client::serverSupportsPartialRequests
      * @covers \PHP\ResumableDownload\Client::start
      * @covers \PHP\ResumableDownload\Client::next
-     * @covers \PHP\ResumableDownload\Client::isLastPartialRequest
      */
     public function testShouldNotAllowRangeEndGreaterThanContentLength()
     {
@@ -345,14 +344,69 @@ class ClientTest extends TestCase
         $client->setLogger($this->logger);
 
         /**
-         * Action and Assert
+         * Action
          */
         $client->serverSupportsPartialRequests();
 
         $client->start();
         $client->next();
 
+        /**
+         * Assert
+         */
         $this->assertEquals("Last partial request", $client->current()->getBody()->getContents());
+    }
+
+    /**
+     * @covers \PHP\ResumableDownload\Client::serverSupportsPartialRequests
+     * @covers \PHP\ResumableDownload\Client::start
+     * @covers \PHP\ResumableDownload\Client::next
+     * @covers \PHP\ResumableDownload\Client::isLastPartialRequest
+     */
+    public function testMustCheckLastPartialRequest()
+    {
+        /**
+         * Arrange
+         */
+        $response = new Response();
+
+        $responseServerSupportsPartialRequests = $response->withAddedHeader('Accept-Ranges', 'bytes')->withAddedHeader('Content-Length', 2000);
+
+        $httpClient = Mockery::spy(\GuzzleHttp\Client::class);
+
+        $httpClient
+            ->shouldReceive('head')
+            ->with('/')
+            ->andReturn($responseServerSupportsPartialRequests);
+
+        $httpClient
+            ->shouldReceive('get')
+            ->once()
+            ->with('', ['headers' => ['Range' => "bytes=0-1023"]])
+            ->andReturn($response);
+
+        $httpClient
+            ->shouldReceive('get')
+            ->once()
+            ->with('', ['headers' => ['Range' => "bytes=1024-2000"]])
+            ->andReturn($response);
+
+        $client = new Client($httpClient);
+        $client->setLogger($this->logger);
+
+        /**
+         * Action and Assert
+         */
+        $client->serverSupportsPartialRequests();
+
+        $client->start();
+        $this->assertFalse($client->isLastPartialRequest());
+
+        $client->next();
+        $this->assertTrue($client->isLastPartialRequest());
+
+        $client->prev();
+        $this->assertFalse($client->isLastPartialRequest());
     }
 
     public function provideValidResponses(): array

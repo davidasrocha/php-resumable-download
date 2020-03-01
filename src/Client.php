@@ -158,11 +158,24 @@ class Client
             $this->rangeStart = $rangeStart;
             $this->rangeEnd = $rangeEnd;
 
+            if ($this->contentLength > 0) {
+                $this->rangeEnd = $this->contentLength;
+                $this->lastPartial = true;
+            }
+
             $this->makePartialRequest();
         } catch (OutOfRangeException $outOfRangeException) {
             $this->logger->error($outOfRangeException);
             throw $outOfRangeException;
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public function isLastPartialRequest(): bool
+    {
+        return $this->lastPartial;
     }
 
     /**
@@ -188,6 +201,7 @@ class Client
 
         if ($this->contentLength > 0) {
             $this->rangeEnd = $this->contentLength;
+            $this->lastPartial = true;
         }
 
         $this->makePartialRequest();
@@ -219,6 +233,8 @@ class Client
                 throw new InvalidRangeException(
                     "Range start and end, must be greater or equal to 0 (zero)", $this->rangeStart, $this->rangeEnd);
             }
+
+            $this->lastPartial = false;
 
             $this->makePartialRequest();
         } catch (OutOfRangeException $outOfRangeException) {
