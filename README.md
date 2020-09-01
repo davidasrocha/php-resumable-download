@@ -13,6 +13,7 @@ You can consume this library inside of your project, pay attention, you are resp
 * [Installation](#installation)
 * [Usage](#usage)
     * [Client](#client)
+* [How can I run tests](#how-can-i-run-tests)
 
 ### Installation
 
@@ -69,4 +70,20 @@ $client->next();
 $client->next();
 $client->prev();
 $response = $client->current();
+```
+
+### How can I run tests
+
+This project has a `Dockerfile` and `docker-compose.yml` to easily run tests: 
+
+To start, inside of the project repository, you will run the command to build a new Docker image containing the PHP dependencies:
+
+```
+$ docker-compose build --force-rm --no-cache
+```
+
+Finally, you can run tests using this command:
+
+```
+$ docker-compose run php
 ```

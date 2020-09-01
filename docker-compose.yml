@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+
+  php:
+    build:
+      dockerfile: ./Dockerfile
+      context: .
+    command: ./run.sh
+    volumes:
+      - .:/var/www/html
